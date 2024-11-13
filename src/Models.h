@@ -9,34 +9,48 @@
 #ifndef GATORTUNERS_MODELS_H
 #define GATORTUNERS_MODELS_H
 
-class Artist{
+struct Artist{
     std::string name;
     std::string id;
     std::vector<std::string> genres;
     int popularity;
-public:
+
     Artist(const std::string &name, const std::string &id, std::vector<std::string> &genres, int popularity);
 
 };
 
-class Track{
+struct Track{
     std::string name;
     std::string id;
     std::vector<Artist*> artists;
     int popularity;
-public:
-    Track(const std::string &name, const std::string &id, std::vector<Artist*> &artists, int popularity);
+    float acousticness;
+    float danceability;
+    float energy;
+    float instrumentalness;
+    float loudness;
+    float speechiness;
+    float tempo;
+    float valence;
+
+
+
+    Track(const std::string &name, const std::string &id, const std::vector<Artist *> &artists, int popularity);
+
 };
 
-class Album{
+struct Album{
     std::string name;
     std::string id;
     int num_tracks;
     std::string date;
     std::vector<Track*> tracks;
     int popularity;
-public:
+
+
     Album(const std::string &name, const std::string &id, int num_tracks, const std::string &date, std::vector<Track*> tracks, int popularity);
+
+
 };
 
 

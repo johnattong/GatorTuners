@@ -7,6 +7,7 @@
 #include <curl/curl.h>
 #include "include/nlohmann/json.hpp"
 #include "Models.h"
+#include <unordered_map>
 
 
 #ifndef GATORTUNERS_SPOTIFY_H
@@ -21,6 +22,10 @@ class Spotify {
     std::string spotify_url = "https://api.spotify.com";
     std::string auth_token = "Authorization: Bearer  ";
 
+    std::unordered_map<std::string, Artist*> ids;
+
+    void getTrackHelper(Track* track);
+
 public:
 
     Spotify(const std::string &authToken);
@@ -28,6 +33,10 @@ public:
     static size_t WriteCallback(void *contents, size_t size, size_t items, void *userp);
 
     Artist* getArtist(const std::string &id);
+
+    Track* getTrack(const std::string id);
+
+    Album* getAlbum(const std::string id);
 };
 
 
