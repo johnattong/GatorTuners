@@ -4,9 +4,32 @@
 
 #include "Spotify.h"
 
-// auth token constructor
-Spotify::Spotify(const std::string &authToken){
-    this->auth_token += authToken;
+ //auth token constructor
+Spotify::Spotify(){
+     std::string url = "https://accounts.spotify.com/api/token";
+     std::string field = "grant_type=client_credentials&client_id=" + client_id + "&client_secret="
+                         + client_secret;
+     std::string buffer;
+
+     CURL *curl = curl_easy_init();
+
+     if (curl){
+         CURLcode result;
+         curl_easy_setopt(curl,CURLOPT_URL, url.c_str());
+         curl_easy_setopt(curl,CURLOPT_POSTFIELDS,field.c_str());
+
+         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &buffer);
+         result = curl_easy_perform(curl);
+     }
+
+     json parse = json::parse(buffer);
+
+     std::string temp = parse["access_token"].dump();
+     temp.pop_back();
+     temp.erase(temp.begin());
+
+     auth_token += temp;
 }
 
 // curl writeback
@@ -67,6 +90,9 @@ Artist* Spotify::getArtist(const std::string &id) {
     Artist* ptr = new Artist(name, artist_id, genres, std::stoi(parse["popularity"].dump()));
 
     ids[id] = ptr;
+
+    std::cout << "Artist found: " << name << "\n\n";
+
     return ptr;
 }
 
@@ -117,6 +143,7 @@ Track *Spotify::getTrack(const std::string id) {
 
     getTrackHelper(ptr);
 
+    std::cout << "Track found: " << name << "\n\n";
 
     return ptr;
 }
@@ -200,8 +227,11 @@ Album *Spotify::getAlbum(const std::string id) {
 
     Album* ptr = new Album(name, id, std::stoi(album["total_tracks"].dump()), date, tracks, std::stoi(album["popularity"].dump()));
 
+    std::cout << "Album found: " << name << "\n\n";
+
     return ptr;
 }
+
 
 
 

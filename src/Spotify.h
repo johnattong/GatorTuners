@@ -28,7 +28,7 @@ class Spotify {
 
 public:
 
-    Spotify(const std::string &authToken);
+    Spotify();
 
     static size_t WriteCallback(void *contents, size_t size, size_t items, void *userp);
 

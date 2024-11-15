@@ -9,6 +9,9 @@
 #ifndef GATORTUNERS_MODELS_H
 #define GATORTUNERS_MODELS_H
 
+
+// TODO: make destructors for structs
+
 struct Artist{
     std::string name;
     std::string id;
