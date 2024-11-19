@@ -9,24 +9,28 @@
 #ifndef GATORTUNERS_MODELS_H
 #define GATORTUNERS_MODELS_H
 
-
-// TODO: make destructors for structs
-
-struct Artist{
+struct Model{
     std::string name;
     std::string id;
-    std::vector<std::string> genres;
     int popularity;
+    std::string image_url;
+
+    Model(const std::string &name, const std::string &id, int popularity);
+
+    virtual ~Model() = default;
+};
+
+struct Artist : public Model{
+    std::vector<std::string> genres;
 
     Artist(const std::string &name, const std::string &id, std::vector<std::string> &genres, int popularity);
 
+    ~Artist() = default;
+
 };
 
-struct Track{
-    std::string name;
-    std::string id;
+struct Track : public Model{
     std::vector<Artist*> artists;
-    int popularity;
     float acousticness;
     float danceability;
     float energy;
@@ -40,19 +44,18 @@ struct Track{
 
     Track(const std::string &name, const std::string &id, const std::vector<Artist *> &artists, int popularity);
 
+    ~Track() = default;
+
 };
 
-struct Album{
-    std::string name;
-    std::string id;
+struct Album : public Model{
     int num_tracks;
     std::string date;
     std::vector<Track*> tracks;
-    int popularity;
 
+    Album(const std::string &name, const std::string &id, int num_tracks, const std::string &date, std::vector<Track*> &tracks, int popularity);
 
-    Album(const std::string &name, const std::string &id, int num_tracks, const std::string &date, std::vector<Track*> tracks, int popularity);
-
+    ~Album() = default;
 
 };
 

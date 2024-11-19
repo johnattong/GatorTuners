@@ -38,6 +38,16 @@ size_t Spotify::WriteCallback(void *contents, size_t size, size_t items, void *u
     return size * items;
 }
 
+// curl write to file
+size_t Spotify::FileCallback(void *contents, size_t size, size_t items, void *userp) {
+    std::ofstream *outfile = (std::ofstream*)userp;
+
+
+    outfile->write((char*)contents,size*items);
+
+    return size * items;
+}
+
 // create ptr to artist
 Artist* Spotify::getArtist(const std::string &id) {
     // artist already in program
@@ -89,6 +99,8 @@ Artist* Spotify::getArtist(const std::string &id) {
 
     Artist* ptr = new Artist(name, artist_id, genres, std::stoi(parse["popularity"].dump()));
 
+    ptr->image_url = parse["images"][1]["url"];
+
     ids[id] = ptr;
 
     std::cout << "Artist found: " << name << "\n\n";
@@ -97,7 +109,7 @@ Artist* Spotify::getArtist(const std::string &id) {
 }
 
 // ptr to track
-Track *Spotify::getTrack(const std::string id) {
+Track *Spotify::getTrack(const std::string &id) {
     std::string url = spotify_url + "/v1/tracks/" + id;
     std::string buffer;
 
@@ -140,6 +152,8 @@ Track *Spotify::getTrack(const std::string id) {
     track_id.erase(track_id.begin());
 
     Track* ptr = new Track(name, id,artists, std::stoi(track["popularity"].dump()));
+
+    ptr->image_url = track["album"]["images"][1]["url"];
 
     getTrackHelper(ptr);
 
@@ -184,7 +198,7 @@ void Spotify::getTrackHelper(Track* track) {
 }
 
 // ptr to album
-Album *Spotify::getAlbum(const std::string id) {
+Album *Spotify::getAlbum(const std::string &id) {
     std::string url = spotify_url + "/v1/albums/" + id;
     std::string buffer;
 
@@ -227,9 +241,77 @@ Album *Spotify::getAlbum(const std::string id) {
 
     Album* ptr = new Album(name, id, std::stoi(album["total_tracks"].dump()), date, tracks, std::stoi(album["popularity"].dump()));
 
+    ptr->image_url = album["images"][1]["url"];
+
     std::cout << "Album found: " << name << "\n\n";
 
     return ptr;
+}
+
+// vector of 10 tracks from search
+std::vector<Track*> Spotify::searchTrack(std::string &query) {
+
+
+    while(query.find(' ') != std::string::npos){
+        query[query.find(' ')] = '+';
+    }
+
+    std::string url = spotify_url + "/v1/search?q=remaster%2520track%3A" + query + "&type=track&limit=10&offset=0";
+
+    std::string buffer;
+
+    CURL *curl = curl_easy_init();
+
+    struct curl_slist * list = NULL;
+
+    list = curl_slist_append(list, auth_token.c_str());
+
+    if (curl){
+        CURLcode result;
+        curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, list);
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &buffer);
+        result = curl_easy_perform(curl);
+
+        curl_easy_cleanup(curl);
+    }
+
+    json data = json::parse(buffer);
+
+    std::vector<Track*> tracks;
+
+
+    for (int i = 0; i < data["tracks"]["items"].size(); i++){
+        tracks.push_back(getTrack(data["tracks"]["items"][i]["id"]));
+
+    }
+
+    return tracks;
+
+}
+
+// returns image path
+std::string Spotify::getImage(std::string &url, std::string &name) {
+
+    std::ofstream buffer("../assets/" + name + ".tga",std::ios_base::binary);
+
+    CURL *curl = curl_easy_init();
+
+
+    if (curl){
+        CURLcode result;
+        curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, FileCallback);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &buffer);
+        result = curl_easy_perform(curl);
+
+        curl_easy_cleanup(curl);
+    }
+
+
+    return "../assets/" + name + ".tga";
+
 }
 
 

@@ -4,10 +4,11 @@
 
 #include <iostream>
 #include <string>
+#include <fstream>
 #include <curl/curl.h>
+#include <unordered_map>
 #include "include/nlohmann/json.hpp"
 #include "Models.h"
-#include <unordered_map>
 
 
 #ifndef GATORTUNERS_SPOTIFY_H
@@ -32,11 +33,17 @@ public:
 
     static size_t WriteCallback(void *contents, size_t size, size_t items, void *userp);
 
+    static size_t FileCallback(void *contents, size_t size, size_t items, void *userp);
+
     Artist* getArtist(const std::string &id);
 
-    Track* getTrack(const std::string id);
+    Track* getTrack(const std::string &id);
 
-    Album* getAlbum(const std::string id);
+    Album* getAlbum(const std::string &id);
+
+    std::vector<Track*> searchTrack(std::string &query);
+
+    std::string getImage(std::string &id, std::string &name);
 };
 
 
