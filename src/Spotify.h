@@ -43,7 +43,7 @@ public:
 
     std::vector<Track*> searchTrack(std::string &query);
 
-    std::string getImage(std::string &id, std::string &name);
+    std::string getImage(std::string &url, std::string &name);
 };
 
 

@@ -48,6 +48,8 @@ size_t Spotify::FileCallback(void *contents, size_t size, size_t items, void *us
     return size * items;
 }
 
+//TODO: API error handling
+
 // create ptr to artist
 Artist* Spotify::getArtist(const std::string &id) {
     // artist already in program
@@ -313,9 +315,4 @@ std::string Spotify::getImage(std::string &url, std::string &name) {
     return "../assets/" + name + ".tga";
 
 }
-
-
-
-
-
 

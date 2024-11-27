@@ -1,11 +1,5 @@
 cmake_minimum_required(VERSION 3.29)
 
-#set(GCC_COVERAGE_COMPILE_FLAGS "-Wall -Werror")
-set(GCC_COVERAGE_LINK_FLAGS "-lcurl")
-
-#set(CMAKE_CXX_FLAGS "${GCC_COVERAGE_COMPILE_FLAGS}" )
-set(CMAKE_EXE_LINKER_FLAGS "${GCC_COVERAGE_LINK_FLAGS}")
-
 include(FetchContent)
 
 FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz)
@@ -23,4 +17,13 @@ add_executable(Main src/main.cpp
         src/Models.cpp
         src/Models.h)
 
-target_link_libraries(Main PRIVATE nlohmann_json::nlohmann_json)
+if (WIN32)
+    # Find and link Curl for Windows
+    find_package(CURL REQUIRED)
+    target_link_libraries(Main PRIVATE CURL::libcurl nlohmann_json::nlohmann_json)
+else()
+    # Unix-specific linking
+    set(GCC_COVERAGE_LINK_FLAGS "-lcurl")
+    set(CMAKE_EXE_LINKER_FLAGS "${GCC_COVERAGE_LINK_FLAGS}")
+    target_link_libraries(Main PRIVATE nlohmann_json::nlohmann_json)
+endif()
