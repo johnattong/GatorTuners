@@ -48,7 +48,6 @@ size_t Spotify::FileCallback(void *contents, size_t size, size_t items, void *us
     return size * items;
 }
 
-//TODO: API error handling
 
 // create ptr to artist
 Artist* Spotify::getArtist(const std::string &id) {
@@ -157,13 +156,15 @@ Track *Spotify::getTrack(const std::string &id) {
 
     ptr->image_url = track["album"]["images"][1]["url"];
 
-    getTrackHelper(ptr);
+    // deprecated function
+    //getTrackHelper(ptr);
 
     std::cout << "Track found: " << name << "\n\n";
 
     return ptr;
 }
 
+// -------------------DEPRECATED BY SPOTIFY-------------------------
 // updates tracks audio features (i.e. tempo, energy etc.)
 void Spotify::getTrackHelper(Track* track) {
     std::string url = spotify_url + "/v1/audio-features/" + track->id;
@@ -186,6 +187,8 @@ void Spotify::getTrackHelper(Track* track) {
         curl_easy_cleanup(curl);
     }
     json features = json::parse(buffer);
+
+    if (buffer.find("error")) return;
 
     track->acousticness = std::stof(features["acousticness"].dump());
     track->danceability = std::stof(features["danceability"].dump());
@@ -307,7 +310,6 @@ std::string Spotify::getImage(std::string &url, std::string &name) {
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, FileCallback);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &buffer);
         result = curl_easy_perform(curl);
-
         curl_easy_cleanup(curl);
     }
 
@@ -315,4 +317,55 @@ std::string Spotify::getImage(std::string &url, std::string &name) {
     return "../assets/" + name + ".tga";
 
 }
+
+std::vector<Track*> Spotify::recommendedTracks(Track *track) {
+
+    std::vector<Track*> tracks;
+
+    std::vector<std::string> temp_genres;
+    for (auto i : track->artists){
+        for (auto j : i->genres){
+            temp_genres.push_back(j);
+        }
+    }
+
+    for (auto genre : temp_genres) {
+
+        while(genre.find(' ') != std::string::npos){
+            genre[genre.find(' ')] = '+';
+        }
+
+        std::string url = spotify_url + "/v1/search?q=remaster%2520genre%3A" + genre +"&type=artist&limit=10&offset=0";
+
+        std::string buffer;
+
+        CURL *curl = curl_easy_init();
+
+        struct curl_slist *list = NULL;
+
+        list = curl_slist_append(list, auth_token.c_str());
+
+        if (curl) {
+            CURLcode result;
+            curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+            curl_easy_setopt(curl, CURLOPT_HTTPHEADER, list);
+            curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+            curl_easy_setopt(curl, CURLOPT_WRITEDATA, &buffer);
+            result = curl_easy_perform(curl);
+
+            curl_easy_cleanup(curl);
+        }
+
+        json data = json::parse(buffer);
+
+        std::string artist_id = data["artists"]["items"][0]["id"];
+
+
+        std::cout << "here";
+
+
+    }
+}
+
+
 

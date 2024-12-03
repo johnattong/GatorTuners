@@ -9,6 +9,8 @@
 #include <unordered_map>
 #include "include/nlohmann/json.hpp"
 #include "Models.h"
+#include "BTree.h"
+#include "Graph.h"
 
 
 #ifndef GATORTUNERS_SPOTIFY_H
@@ -44,6 +46,8 @@ public:
     std::vector<Track*> searchTrack(std::string &query);
 
     std::string getImage(std::string &url, std::string &name);
+
+    std::vector<Track*> recommendedTracks(Track* track);
 };
 
 
