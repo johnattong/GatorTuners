@@ -4,6 +4,7 @@
 
 #include <iostream>
 #include <vector>
+#pragma once
 
 
 #ifndef GATORTUNERS_MODELS_H
@@ -15,7 +16,7 @@ struct Model{
     int popularity;
     std::string image_url;
 
-    Model(const std::string &name, const std::string &id, int popularity);
+    Model(const std::string &name, const std::string &id);
 
     virtual ~Model() = default;
 };
@@ -23,7 +24,7 @@ struct Model{
 struct Artist : public Model{
     std::vector<std::string> genres;
 
-    Artist(const std::string &name, const std::string &id, std::vector<std::string> &genres, int popularity);
+    Artist(const std::string &name, const std::string &id, std::vector<std::string> &genres);
 
     ~Artist() = default;
 
@@ -40,9 +41,13 @@ struct Track : public Model{
     float tempo;
     float valence;
 
+    Track(const std::string &name, const std::string &id, const std::vector<Artist *> &artists);
 
-
-    Track(const std::string &name, const std::string &id, const std::vector<Artist *> &artists, int popularity);
+    void printArtists(){
+        for (auto person : artists){
+            std::cout << person->name << (((find(artists.begin(), artists.end(), person)) != artists.end()) ? ", " : " ");
+        }
+    }
 
     ~Track() = default;
 
@@ -53,7 +58,7 @@ struct Album : public Model{
     std::string date;
     std::vector<Track*> tracks;
 
-    Album(const std::string &name, const std::string &id, int num_tracks, const std::string &date, std::vector<Track*> &tracks, int popularity);
+    Album(const std::string &name, const std::string &id, const std::string &date, std::vector<Track*> &tracks);
 
     ~Album() = default;
 

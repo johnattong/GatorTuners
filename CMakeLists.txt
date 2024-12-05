@@ -15,7 +15,13 @@ add_executable(Main src/main.cpp
         src/Spotify.cpp
         src/Spotify.h
         src/Models.cpp
-        src/Models.h)
+        src/Models.h
+        src/BTree.h
+        src/Graph.h
+        src/Stopwatch.cpp
+        src/Stopwatch.h
+)
+
 
 if (WIN32)
     # Find and link Curl for Windows
@@ -26,4 +32,5 @@ else()
     set(GCC_COVERAGE_LINK_FLAGS "-lcurl")
     set(CMAKE_EXE_LINKER_FLAGS "${GCC_COVERAGE_LINK_FLAGS}")
     target_link_libraries(Main PRIVATE nlohmann_json::nlohmann_json)
+
 endif()

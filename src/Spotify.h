@@ -11,6 +11,7 @@
 #include "Models.h"
 #include "BTree.h"
 #include "Graph.h"
+#pragma once
 
 
 #ifndef GATORTUNERS_SPOTIFY_H
@@ -19,15 +20,17 @@
 using json = nlohmann::json;
 
 
-class Spotify {
-    std::string client_id = "66a7a7b20586418c91deaaffb6b06993";
-    std::string client_secret = "10440d9fad6849478d20dfdacae968ce";
+class Spotify {                                                 //i think both of these are mines - lucas one doesn't work so watch out
+    std::string client_id = "20a3f27041914ae9ba74bffbf6d5bac0"; //"b1f6b407124b4f8d87e532ac982e4b79"; "0539b46a746748b79f7f94b45834efb1";
+    std::string client_secret = "5ad9860283364a31aa232e20886558c1"; //"63956e64d94b4d418ae98946d01b8d72"; "33531cbeff994248beb7d7f3b833823e";
     std::string spotify_url = "https://api.spotify.com";
     std::string auth_token = "Authorization: Bearer  ";
 
     std::unordered_map<std::string, Artist*> ids;
 
     void getTrackHelper(Track* track);
+
+    void recommendedTracksHelper(std::vector<Track*>& tracks, std::string& id);
 
 public:
 

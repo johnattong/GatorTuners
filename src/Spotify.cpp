@@ -3,6 +3,8 @@
 //
 
 #include "Spotify.h"
+#include <thread>
+#include <chrono>
 
  //auth token constructor
 Spotify::Spotify(){
@@ -56,6 +58,7 @@ Artist* Spotify::getArtist(const std::string &id) {
 
     std::string url = spotify_url + "/v1/artists/" + id;
     std::string buffer;
+    std::string header;
 
     CURL *curl = curl_easy_init();
 
@@ -67,9 +70,21 @@ Artist* Spotify::getArtist(const std::string &id) {
         CURLcode result;
         curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
         curl_easy_setopt(curl, CURLOPT_HTTPHEADER, list);
+        curl_easy_setopt(curl,CURLOPT_HEADERFUNCTION, WriteCallback);
+        curl_easy_setopt(curl, CURLOPT_HEADERDATA, &header);
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &buffer);
         result = curl_easy_perform(curl);
+
+        while (header.find("HTTP/2 429") != std::string::npos){
+            int index = header.find("retry-after:");
+            index += 12;
+            int cooldown = stoi(header.substr(index, header.find('\\')));
+            std::cout << "Spotify cooldown: " << cooldown << " seconds" << endl;
+            std::cout << "Rate limiting --- Please kill process or we'll break the API" << std::endl;
+            std::this_thread::sleep_for(std::chrono::seconds (cooldown));
+            result = curl_easy_perform(curl);
+        }
         curl_easy_cleanup(curl);
     }
 
@@ -98,13 +113,13 @@ Artist* Spotify::getArtist(const std::string &id) {
     artist_id.pop_back();
     artist_id.erase(artist_id.begin());
 
-    Artist* ptr = new Artist(name, artist_id, genres, std::stoi(parse["popularity"].dump()));
+    Artist* ptr = new Artist(name, artist_id, genres);
 
-    ptr->image_url = parse["images"][1]["url"];
+    if (parse["images"].size() != 0) ptr->image_url = parse["images"][0]["url"];
 
     ids[id] = ptr;
 
-    std::cout << "Artist found: " << name << "\n\n";
+    //std::cout << "Artist found: " << name << "\n\n";
 
     return ptr;
 }
@@ -113,6 +128,7 @@ Artist* Spotify::getArtist(const std::string &id) {
 Track *Spotify::getTrack(const std::string &id) {
     std::string url = spotify_url + "/v1/tracks/" + id;
     std::string buffer;
+    std::string header;
 
     CURL *curl = curl_easy_init();
 
@@ -124,14 +140,29 @@ Track *Spotify::getTrack(const std::string &id) {
         CURLcode result;
         curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
         curl_easy_setopt(curl, CURLOPT_HTTPHEADER, list);
+        curl_easy_setopt(curl,CURLOPT_HEADERFUNCTION, WriteCallback);
+        curl_easy_setopt(curl, CURLOPT_HEADERDATA, &header);
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &buffer);
         result = curl_easy_perform(curl);
 
+        while (header.find("HTTP/2 429") != std::string::npos){
+            int index = header.find("retry-after:");
+            index += 12;
+            int cooldown = stoi(header.substr(index, header.find('\\')));
+            std::cout << "Spotify cooldown: " << cooldown << " seconds" << endl;
+            std::cout << "Rate limiting --- Please kill process or we'll break the API" << std::endl;
+            std::this_thread::sleep_for(std::chrono::seconds (cooldown));
+            result = curl_easy_perform(curl);
+        }
+
         curl_easy_cleanup(curl);
     }
 
+    if (buffer.empty()) return nullptr;
+
     json track = json::parse(buffer);
+
 
 
     std::vector<Artist*> artists;
@@ -152,14 +183,14 @@ Track *Spotify::getTrack(const std::string &id) {
     track_id.pop_back();
     track_id.erase(track_id.begin());
 
-    Track* ptr = new Track(name, id,artists, std::stoi(track["popularity"].dump()));
+    Track* ptr = new Track(name, id,artists);
 
     ptr->image_url = track["album"]["images"][1]["url"];
 
     // deprecated function
     //getTrackHelper(ptr);
 
-    std::cout << "Track found: " << name << "\n\n";
+    //std::cout << "Track found: " << name << "\n\n";
 
     return ptr;
 }
@@ -206,6 +237,7 @@ void Spotify::getTrackHelper(Track* track) {
 Album *Spotify::getAlbum(const std::string &id) {
     std::string url = spotify_url + "/v1/albums/" + id;
     std::string buffer;
+    std::string header;
 
     CURL *curl = curl_easy_init();
 
@@ -217,9 +249,21 @@ Album *Spotify::getAlbum(const std::string &id) {
         CURLcode result;
         curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
         curl_easy_setopt(curl, CURLOPT_HTTPHEADER, list);
+        curl_easy_setopt(curl,CURLOPT_HEADERFUNCTION, WriteCallback);
+        curl_easy_setopt(curl, CURLOPT_HEADERDATA, &header);
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &buffer);
         result = curl_easy_perform(curl);
+
+        while (header.find("HTTP/2 429") != std::string::npos){
+            int index = header.find("retry-after:");
+            index += 12;
+            int cooldown = stoi(header.substr(index, header.find('\\')));
+            std::cout << "Spotify cooldown: " << cooldown << " seconds" << endl;
+            std::cout << "Rate limiting --- Please kill process or we'll break the API" << std::endl;
+            std::this_thread::sleep_for(std::chrono::seconds (cooldown));
+            result = curl_easy_perform(curl);
+        }
 
         curl_easy_cleanup(curl);
     }
@@ -244,7 +288,7 @@ Album *Spotify::getAlbum(const std::string &id) {
     name.pop_back();
     name.erase(name.begin());
 
-    Album* ptr = new Album(name, id, std::stoi(album["total_tracks"].dump()), date, tracks, std::stoi(album["popularity"].dump()));
+    Album* ptr = new Album(name, id, date, tracks);
 
     ptr->image_url = album["images"][1]["url"];
 
@@ -255,51 +299,97 @@ Album *Spotify::getAlbum(const std::string &id) {
 
 // vector of 10 tracks from search
 std::vector<Track*> Spotify::searchTrack(std::string &query) {
-
-
-    while(query.find(' ') != std::string::npos){
-        query[query.find(' ')] = '+';
-    }
-
-    std::string url = spotify_url + "/v1/search?q=remaster%2520track%3A" + query + "&type=track&limit=10&offset=0";
-
-    std::string buffer;
-
-    CURL *curl = curl_easy_init();
-
-    struct curl_slist * list = NULL;
-
-    list = curl_slist_append(list, auth_token.c_str());
-
-    if (curl){
-        CURLcode result;
-        curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, list);
-        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
-        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &buffer);
-        result = curl_easy_perform(curl);
-
-        curl_easy_cleanup(curl);
-    }
-
-    json data = json::parse(buffer);
+    auto encodeQ = [](std::string &q) {
+        while (q.find(' ') != std::string::npos) {
+            q[q.find(' ')] = '+';
+        }
+    };
 
     std::vector<Track*> tracks;
 
+    //while (true) {
+        std::string originalQuery = query;
+        encodeQ(query);
 
-    for (int i = 0; i < data["tracks"]["items"].size(); i++){
-        tracks.push_back(getTrack(data["tracks"]["items"][i]["id"]));
+        // Construct the API URL
+        std::string url = spotify_url + "/v1/search?q=remaster%2520track%3A" + query + "&type=track&limit=10&offset=0";
+        std::string buffer;
+        std::string header;
 
-    }
+        // Initialize CURL
+        CURL *curl = curl_easy_init();
+        struct curl_slist *list = nullptr;
+        list = curl_slist_append(list, auth_token.c_str());
+
+        if (curl) {
+            CURLcode result;
+            curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+            curl_easy_setopt(curl, CURLOPT_HTTPHEADER, list);
+            curl_easy_setopt(curl,CURLOPT_HEADERFUNCTION, WriteCallback);
+            curl_easy_setopt(curl, CURLOPT_HEADERDATA, &header);
+            curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+            curl_easy_setopt(curl, CURLOPT_WRITEDATA, &buffer);
+            result = curl_easy_perform(curl);
+
+            while (header.find("HTTP/2 429") != std::string::npos){
+                int index = header.find("retry-after:");
+                index += 12;
+                int cooldown = stoi(header.substr(index, header.find('\\')));
+                std::cout << "Spotify cooldown: " << cooldown << " seconds" << endl;
+                std::cout << "Rate limiting --- Please kill process or we'll break the API" << std::endl;
+                std::this_thread::sleep_for(std::chrono::seconds (cooldown));
+                result = curl_easy_perform(curl);
+            }
+
+            curl_easy_cleanup(curl);
+        }
+
+        json data = json::parse(buffer);
+
+        // Parse JSON response
+//        try {
+//            json data = json::parse(buffer);
+//
+//            // Validate the structure of the JSON
+//            if (data.contains("tracks") && data["tracks"].contains("items")) {
+//                auto items = data["tracks"]["items"];
+//                for (const auto &item : items) {
+//                    // Ensure the "id" field exists and is a string
+//                    if (item.contains("id") && !item["id"].is_null()) {
+//                        std::string trackId = item["id"];
+//                        tracks.push_back(getTrack(trackId));
+//                    } else {
+//                        std::cerr << "Skipping item with missing or null 'id'" << std::endl;
+//                    }
+//                }
+//            } else {
+//                std::cerr << "No 'tracks' or 'items' found in the response." << std::endl;
+//            }
+//        } catch (const json::exception &e) {
+//            std::cerr << "Error parsing JSON: " << e.what() << std::endl;
+//        }
+//
+//        // Check if tracks were successfully added
+//        if (!tracks.empty()) {
+//            break;
+//        } else {
+//            std::cerr << "No songs found with the name \"" << originalQuery << "\". Could you re-enter the name?" << std::endl;
+//            std::getline(std::cin, query);
+//        }
+//    }
+
+        for (int i = 0; i < data["tracks"]["items"].size(); i++){
+            tracks.push_back(getTrack(data["tracks"]["items"][i]["id"]));
+        }
 
     return tracks;
-
 }
 
 // returns image path
 std::string Spotify::getImage(std::string &url, std::string &name) {
 
     std::ofstream buffer("../assets/" + name + ".tga",std::ios_base::binary);
+    std::string header;
 
     CURL *curl = curl_easy_init();
 
@@ -307,6 +397,8 @@ std::string Spotify::getImage(std::string &url, std::string &name) {
     if (curl){
         CURLcode result;
         curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+        curl_easy_setopt(curl,CURLOPT_HEADERFUNCTION, WriteCallback);
+        curl_easy_setopt(curl, CURLOPT_HEADERDATA, &header);
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, FileCallback);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &buffer);
         result = curl_easy_perform(curl);
@@ -319,7 +411,6 @@ std::string Spotify::getImage(std::string &url, std::string &name) {
 }
 
 std::vector<Track*> Spotify::recommendedTracks(Track *track) {
-
     std::vector<Track*> tracks;
 
     std::vector<std::string> temp_genres;
@@ -329,15 +420,20 @@ std::vector<Track*> Spotify::recommendedTracks(Track *track) {
         }
     }
 
+    if (temp_genres.size() == 0){
+        std::cout << "Error: No genres to generate songs" << std::endl;
+    }
+
     for (auto genre : temp_genres) {
 
         while(genre.find(' ') != std::string::npos){
             genre[genre.find(' ')] = '+';
         }
 
-        std::string url = spotify_url + "/v1/search?q=remaster%2520genre%3A" + genre +"&type=artist&limit=10&offset=0";
+        std::string url = spotify_url + "/v1/search?q=remaster%2520genre%3A" + genre +"&type=artist&limit=3&offset=0";
 
         std::string buffer;
+        std::string header;
 
         CURL *curl = curl_easy_init();
 
@@ -349,23 +445,78 @@ std::vector<Track*> Spotify::recommendedTracks(Track *track) {
             CURLcode result;
             curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
             curl_easy_setopt(curl, CURLOPT_HTTPHEADER, list);
+            curl_easy_setopt(curl,CURLOPT_HEADERFUNCTION, WriteCallback);
+            curl_easy_setopt(curl, CURLOPT_HEADERDATA, &header);
             curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
             curl_easy_setopt(curl, CURLOPT_WRITEDATA, &buffer);
             result = curl_easy_perform(curl);
+
+            while (header.find("HTTP/2 429") != std::string::npos){
+                int index = header.find("retry-after:");
+                index += 12;
+                int cooldown = stoi(header.substr(index, header.find('\\')));
+                std::cout << "Spotify cooldown: " << cooldown << " seconds" << endl;
+                std::cout << "Rate limiting --- Please kill process or we'll break the API" << std::endl;
+                std::this_thread::sleep_for(std::chrono::seconds (cooldown));
+                result = curl_easy_perform(curl);
+            }
 
             curl_easy_cleanup(curl);
         }
 
         json data = json::parse(buffer);
 
-        std::string artist_id = data["artists"]["items"][0]["id"];
 
 
-        std::cout << "here";
+        for (int i = 0; i < data["artists"]["items"].size(); i++){
+            std::string artist_id = data["artists"]["items"][i]["id"];
+ 
 
+            recommendedTracksHelper(tracks, artist_id);
+        }
 
     }
+    return tracks;
 }
 
+// add top tracks from artist to list
+void Spotify::recommendedTracksHelper(std::vector<Track *> &tracks, std::string &id) {
 
+    std::string buffer;
+    std::string header;
+    std::string url = spotify_url + "/v1/artists/" + id + "/top-tracks";
 
+    CURL *curl = curl_easy_init();
+
+    struct curl_slist *list = NULL;
+
+    list = curl_slist_append(list, auth_token.c_str());
+
+    if (curl){
+        CURLcode result;
+        curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, list);
+        curl_easy_setopt(curl,CURLOPT_HEADERFUNCTION, WriteCallback);
+        curl_easy_setopt(curl, CURLOPT_HEADERDATA, &header);
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &buffer);
+        result = curl_easy_perform(curl);
+
+        while (header.find("HTTP/2 429") != std::string::npos){
+            int index = header.find("retry-after:");
+            index += 12;
+            int cooldown = stoi(header.substr(index, header.find('\\')));
+            std::cout << "Spotify cooldown: " << cooldown << " seconds" << endl;
+            std::cout << "Rate limiting --- Please kill process or we'll break the API" << std::endl;
+            std::this_thread::sleep_for(std::chrono::seconds (cooldown));
+            result = curl_easy_perform(curl);
+        }
+        curl_easy_cleanup(curl);
+    }
+
+    json data = json::parse(buffer);
+
+    for (int i = 0; i < data["tracks"].size(); i++){
+        tracks.push_back(getTrack(data["tracks"][i]["id"]));
+    }
+}

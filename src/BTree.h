@@ -36,6 +36,29 @@ class BTree {
 private:
     BTreeNode<T, ORDER>* root; // Pointer to root node
 
+    T searchByName(const std::string& name) {
+        return searchByNameHelper(root, name);
+    }
+
+    T searchByNameHelper(BTreeNode<T, ORDER>* node, const std::string& name) {
+        if (node == nullptr) return nullptr;
+
+        for (int i = 0; i < node->n; i++) {
+            if (node->keys[i]->name == name) {
+                return node->keys[i];
+            }
+        }
+
+        if (node->leaf) return nullptr;
+
+        for (int i = 0; i <= node->n; i++) {
+            T result = searchByNameHelper(node->children[i], name);
+            if (result != nullptr) return result;
+        }
+
+        return nullptr;
+    }
+
     // Function to split a full child node
     void splitChild(BTreeNode<T, ORDER>* x, int i) {
         BTreeNode<T, ORDER>* y = x->children[i];
@@ -324,19 +347,30 @@ private:
         }
     }
 
+    bool isDuplicate(T k) {
+        return (searchByName(k->name) != nullptr || searchByID(k->id) != nullptr);
+    }
+
 public:
     BTree() { root = new BTreeNode<T, ORDER>(true); }
 
     // Function to insert a key in the tree
     void insert(T k) {
+        // Check for duplicates before insertion
+        if (isDuplicate(k)) {
+            //std::cout << "Duplicate song found. Skipping insertion." << std::endl;
+            return;
+        }
+
         if (root->n == ORDER - 1) {
             BTreeNode<T, ORDER>* s = new BTreeNode<T, ORDER>(false);
             s->children[0] = root;
             root = s;
             splitChild(s, 0);
             insertNonFull(s, k);
-        } else
+        } else {
             insertNonFull(root, k);
+        }
     }
 
     // Function to traverse the tree
@@ -350,6 +384,33 @@ public:
         return (root == nullptr) ? nullptr : search(root, k);
     }
 
+    //Function to search a key by ID in the tree
+    T searchByID(const std::string& id) {
+        if (root == nullptr) {
+            return nullptr;
+        }
+
+        BTreeNode<T, ORDER>* current = root;
+        while (current != nullptr) {
+            for (int i = 0; i < current->n; i++) {
+                if (current->keys[i]->id == id) {
+                    return current->keys[i];
+                }
+            }
+
+            if (current->leaf) {
+                break;
+            }
+
+            int i = 0;
+            while (i < current->n && id > current->keys[i]->id) {
+                i++;
+            }
+            current = current->children[i];
+        }
+
+        return nullptr;
+    }
     // Function to remove a key from the tree
     void remove(T k) {
         if (!root) {
@@ -379,6 +440,13 @@ public:
             result.push_back(pair.first);
         }
         return result;
+    }
+
+    T getRootTrack() {
+        if (root == nullptr || root->n == 0) {
+            return nullptr; // Return nullptr if the tree is empty or the root has no keys
+        }
+        return root->keys[0]; // Return the first key in the root node
     }
 };
 

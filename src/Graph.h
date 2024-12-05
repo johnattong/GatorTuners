@@ -14,11 +14,21 @@ class Graph {
 
 public:
     // Function to add an edge between vertices u and v of the graph
+    // Function to add an edge between vertices u and v of the graph
     void add_edge(T u, T v) {
-        // Add edge from u to v
-        adjList[u].push_back(v);
-        // Add edge from v to u because the graph is undirected
-        adjList[v].push_back(u);
+        if (u == nullptr || v == nullptr) {
+            return; // Don't add the edge if v is nullptr
+        }
+        // Check if edge from u to v already exists
+        if (std::find(adjList[u].begin(), adjList[u].end(), v) == adjList[u].end()) {
+            // Add edge from u to v
+            adjList[u].push_back(v);
+        }
+        // Check if edge from v to u already exists
+        if (std::find(adjList[v].begin(), adjList[v].end(), u) == adjList[v].end()) {
+            // Add edge from v to u because the graph is undirected
+            adjList[v].push_back(u);
+        }
     }
 
     // Function to print the adjacency list representation of the graph
@@ -35,6 +45,30 @@ public:
             }
             std::cout << std::endl;
         }
+    }
+
+    vector<T> getDFS() {
+        vector<T> result;
+        set<T> visited;
+
+        function<void(T)> dfs = [&](T node) {
+            if (visited.find(node) != visited.end()) return;
+
+            visited.insert(node);
+            result.push_back(node);
+
+            for (const auto& neighbor : adjList[node]) {
+                dfs(neighbor);
+            }
+        };
+
+        for (const auto& pair : adjList) {
+            if (visited.find(pair.first) == visited.end()) {
+                dfs(pair.first);
+            }
+        }
+
+        return result;
     }
 
     double jaccardSimilarity(T u, T v) {
@@ -56,7 +90,7 @@ public:
                        std::back_inserter(union_set));
 
         // Jaccard similarity = size of intersection / size of union
-        return static_cast<double>(intersection.size()) / union_set.size();
+        return static_cast<double>(intersection.size()) / static_cast<double>(union_set.size());
     }
 };
 
